@@ -1,6 +1,6 @@
 // gcc -O2 -shared -fPIC hellomod.c -o hellomod.so
 
-#include "redismodule.h"
+#include "../include/redismodule.h"
 //#include <stdlib.h>
 #include <string.h>
 
