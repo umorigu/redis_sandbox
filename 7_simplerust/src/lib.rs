@@ -1,7 +1,9 @@
 extern crate libc;
 use libc::c_int;
 
-const MODULE_NAME: &'static str = "emptyrust2";
+const MODULE_NAME: &'static str = "simplerust";
+const COMMAND_NAME: &'static str = "simplerust";
+const READONLY_FLAG: &'static str = "readonly";
 
 pub enum RedisModuleCtx {}
 pub enum RedisModuleString {}
@@ -17,7 +19,7 @@ extern "C" {
     ) -> c_int;
 }
 
-pub fn SimpleRust_RedisCommand(
+extern fn SimpleRust_RedisCommand(
     ctx: *mut RedisModuleCtx,
     argv: *mut *mut RedisModuleString,
     argc: c_int,
@@ -58,6 +60,16 @@ pub extern "C" fn RedisModule_OnLoad(
 ) -> c_int {
     unsafe {
         Export_RedisModule_Init(ctx, format!("{}\0", MODULE_NAME).as_ptr(), 1, 1);
+        // Error (Crash redis) - RedisModule_CreateCommand
+        RedisModule_CreateCommand(
+            ctx,
+            format!("{}\0", COMMAND_NAME).as_ptr(),
+            SimpleRust_RedisCommand,
+            format!("{}\0", READONLY_FLAG).as_ptr(),
+            1,
+            1,
+            1,
+        );
     }
     return 0;
 }
