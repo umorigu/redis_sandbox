@@ -25,7 +25,7 @@ extern "C" {
     ) -> c_int;
 }
 
-extern fn SimpleRust_RedisCommand(
+extern "C" fn SimpleRust_RedisCommand(
     ctx: *mut RedisModuleCtx,
     argv: *mut *mut RedisModuleString,
     argc: c_int,
