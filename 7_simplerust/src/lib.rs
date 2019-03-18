@@ -8,6 +8,12 @@ const READONLY_FLAG: &'static str = "readonly";
 pub enum RedisModuleCtx {}
 pub enum RedisModuleString {}
 
+pub type RedisModuleCmdFunc = extern "C" fn(
+    ctx: *mut RedisModuleCtx,
+    argv: *mut *mut RedisModuleString,
+    argc: c_int,
+) -> c_int;
+
 #[allow(improper_ctypes)]
 #[link(name = "redismodule", kind = "static")]
 extern "C" {
@@ -24,7 +30,7 @@ extern fn SimpleRust_RedisCommand(
     argv: *mut *mut RedisModuleString,
     argc: c_int,
 ) -> c_int {
-    if (argc != 2) {
+    if argc != 2 {
         return 1;
     }
     return 0;
@@ -34,23 +40,16 @@ extern "C" {
     // int RedisModule_CreateCommand(RedisModuleCtx *ctx, const char *name,
     //   RedisModuleCmdFunc cmdfunc, const char *strflags, int firstkey,
     //   int lastkey, int keystep);
-    fn RedisModule_CreateCommand(
+    static RedisModule_CreateCommand: extern "C" fn(
         ctx: *mut RedisModuleCtx,
         name: *const u8,
-        fmdfunc: extern "C" fn(*mut RedisModuleCtx, *mut *mut RedisModuleString, c_int) -> c_int,
+        fmdfunc: RedisModuleCmdFunc,
         strflags: *const u8,
         firstkey: c_int,
         lastkey: c_int,
         keystep: c_int,
-    );
+    ) -> c_int;
 }
-
-/*
-enum Status {
-    Ok = 0,
-    Err = 1,
-}
-*/
 
 #[no_mangle]
 pub extern "C" fn RedisModule_OnLoad(
@@ -60,8 +59,7 @@ pub extern "C" fn RedisModule_OnLoad(
 ) -> c_int {
     unsafe {
         Export_RedisModule_Init(ctx, format!("{}\0", MODULE_NAME).as_ptr(), 1, 1);
-        // Error (Crash redis) - RedisModule_CreateCommand
-        RedisModule_CreateCommand(
+        if RedisModule_CreateCommand(
             ctx,
             format!("{}\0", COMMAND_NAME).as_ptr(),
             SimpleRust_RedisCommand,
@@ -69,7 +67,10 @@ pub extern "C" fn RedisModule_OnLoad(
             1,
             1,
             1,
-        );
+        ) == 1
+        {
+            return 1;
+        }
     }
     return 0;
 }

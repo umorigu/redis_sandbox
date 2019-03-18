@@ -6,4 +6,3 @@ fn main() {
         .include("include/")
         .compile("libredismodule.a");
 }
-
