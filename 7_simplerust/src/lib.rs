@@ -1,5 +1,5 @@
 extern crate libc;
-use libc::c_int;
+use libc::{c_int, size_t};
 
 const MODULE_NAME: &'static str = "simplerust";
 const COMMAND_NAME: &'static str = "simplerust";
@@ -33,6 +33,10 @@ extern fn SimpleRust_RedisCommand(
     if argc != 2 {
         return 1;
     }
+    unsafe {
+        const HELLO: &'static str = "hello";
+        RedisModule_ReplyWithStringBuffer(ctx, format!("{}", HELLO).as_ptr(), HELLO.len());
+    }
     return 0;
 }
 
@@ -49,6 +53,9 @@ extern "C" {
         lastkey: c_int,
         keystep: c_int,
     ) -> c_int;
+
+    static RedisModule_ReplyWithStringBuffer:
+        extern "C" fn(ctx: *mut RedisModuleCtx, str: *const u8, len: size_t) -> c_int;
 }
 
 #[no_mangle]
